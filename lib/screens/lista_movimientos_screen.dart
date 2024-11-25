@@ -20,6 +20,7 @@ class _ListaMovimientosScreenState extends State<ListaMovimientosScreen> {
   bool isLoading = false;
   String? nextUrl;
   bool isDisposed = false;
+  String lastQuery = ''; // Almacena la última búsqueda realizada.
 
   @override
   void initState() {
@@ -56,14 +57,14 @@ class _ListaMovimientosScreenState extends State<ListaMovimientosScreen> {
         }
 
         if (nextUrl != null && !isDisposed) {
-          fetchMovimientos(nextUrl!);
+          await fetchMovimientos(nextUrl!);
         }
       } else {
         throw Exception('Error al cargar los movimientos');
       }
     } on TimeoutException catch (_) {
       if (retries > 0) {
-        fetchMovimientos(url, retries: retries - 1);
+        await fetchMovimientos(url, retries: retries - 1);
       } else {
         setState(() {
           isLoading = false;
@@ -73,7 +74,7 @@ class _ListaMovimientosScreenState extends State<ListaMovimientosScreen> {
       }
     } on http.ClientException catch (_) {
       if (retries > 0) {
-        fetchMovimientos(url, retries: retries - 1);
+        await fetchMovimientos(url, retries: retries - 1);
       } else {
         setState(() {
           isLoading = false;
@@ -84,12 +85,58 @@ class _ListaMovimientosScreenState extends State<ListaMovimientosScreen> {
   }
 
   void filterMovimientos(String query) {
+    // Ignorar si la consulta es igual a la última realizada.
+    if (query == lastQuery) return;
+
+    // Actualizar lastQuery.
+    lastQuery = query;
+
+    // Si el texto es menor a 3 caracteres, no filtrar ni hacer peticiones.
+    if (query.length < 3) {
+      setState(() {
+        filteredMovimientos = movimientos; // Restaurar la lista completa.
+      });
+      return;
+    }
+
+    // Filtrar resultados locales.
     setState(() {
       filteredMovimientos = movimientos
           .where((movimiento) =>
               movimiento['name'].toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
+
+    // Si no se encuentra nada en local, puedes agregar lógica para buscar en la API.
+    if (filteredMovimientos.isEmpty) {
+      fetchMovimientosForQuery(query);
+    }
+  }
+
+  Future<void> fetchMovimientosForQuery(String query) async {
+    // Construir la URL con el filtro de búsqueda (esto dependerá de la API).
+    final url = 'https://pokeapi.co/api/v2/move?search=$query';
+
+    try {
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (!isDisposed) {
+          setState(() {
+            filteredMovimientos = data['results'];
+          });
+        }
+      } else {
+        throw Exception('Error al buscar movimientos');
+      }
+    } on TimeoutException catch (_) {
+      throw Exception('Tiempo de espera agotado. No se pudo conectar a la API.');
+    } on http.ClientException catch (_) {
+      throw Exception('Error de conexión. Verifica tu red o la API.');
+    }
   }
 
   void clearSearch() {
@@ -193,3 +240,5 @@ class _ListaMovimientosScreenState extends State<ListaMovimientosScreen> {
     return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png';
   }
 }
+
+

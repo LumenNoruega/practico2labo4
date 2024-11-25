@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:practico2labo4/helpers/preferences.dart';
 import 'package:practico2labo4/provider/theme_provider.dart';
 import 'package:practico2labo4/screens/home_screen.dart';
-
-
 import 'package:practico2labo4/screens/lista_movimientos_screen.dart';
 import 'package:practico2labo4/screens/profile_screen.dart';
 import 'package:practico2labo4/themes/default_theme.dart';
@@ -52,9 +50,7 @@ class MyApp extends StatelessWidget {
               : DefaultTheme.lightTheme, // Cambia tema dinámicamente
           routes: {
             'home': (context) => const HomeScreen(),
-            
             'profile': (context) => const ProfileScreen(),
-            
             'lista_movimientos': (context) => const ListaMovimientosScreen(),
           },
         );
