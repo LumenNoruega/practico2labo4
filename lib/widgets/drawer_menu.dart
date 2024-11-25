@@ -9,7 +9,6 @@ class DrawerMenu extends StatelessWidget {
       'title': 'Pantalla Principal',
       'subtitle': 'Muestra pantalla principal'
     },
-    {'route': 'custom_list', 'title': 'nova', 'subtitle': ''},
     {
       'route': 'profile',
       'title': 'Pokemon Black',
